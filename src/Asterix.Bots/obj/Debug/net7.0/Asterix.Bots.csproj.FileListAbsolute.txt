@@ -1,0 +1,15 @@
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\bin\Debug\net7.0\Asterix.Bots.deps.json
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\bin\Debug\net7.0\Asterix.Bots.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\bin\Debug\net7.0\Asterix.Bots.pdb
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\bin\Debug\net7.0\Asterix.Core.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\bin\Debug\net7.0\Asterix.Core.pdb
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.csproj.AssemblyReference.cache
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.AssemblyInfoInputs.cache
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.AssemblyInfo.cs
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.csproj.CoreCompileInputs.cache
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix..B01BB78C.Up2Date
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\refint\Asterix.Bots.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.pdb
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\ref\Asterix.Bots.dll

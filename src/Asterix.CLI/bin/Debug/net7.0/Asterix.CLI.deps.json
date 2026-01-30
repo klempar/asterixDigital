@@ -1,0 +1,56 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v7.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v7.0": {
+      "Asterix.CLI/1.0.0": {
+        "dependencies": {
+          "Asterix.Bots": "1.0.0",
+          "Asterix.Core": "1.0.0"
+        },
+        "runtime": {
+          "Asterix.CLI.dll": {}
+        }
+      },
+      "Asterix.Bots/1.0.0": {
+        "dependencies": {
+          "Asterix.Core": "1.0.0"
+        },
+        "runtime": {
+          "Asterix.Bots.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Asterix.Core/1.0.0": {
+        "runtime": {
+          "Asterix.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Asterix.CLI/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Asterix.Bots/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Asterix.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

@@ -1,0 +1,11 @@
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\bin\Debug\net7.0\Asterix.Core.deps.json
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\bin\Debug\net7.0\Asterix.Core.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\bin\Debug\net7.0\Asterix.Core.pdb
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.AssemblyInfoInputs.cache
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.AssemblyInfo.cs
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.csproj.CoreCompileInputs.cache
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\refint\Asterix.Core.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.pdb
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\ref\Asterix.Core.dll

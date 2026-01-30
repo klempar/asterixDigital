@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Asterix.Bots/Asterix.Bots.csproj" />
+    <Project Path="src/Asterix.CLI/Asterix.CLI.csproj" />
+    <Project Path="src/Asterix.Core/Asterix.Core.csproj" />
+  </Folder>
+</Solution>

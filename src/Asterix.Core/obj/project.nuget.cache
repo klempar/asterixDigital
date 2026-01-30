@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "av7si7F2pt8=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Honzik\\asterixDigital\\src\\Asterix.Core\\Asterix.Core.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Honzik\\.nuget\\packages\\microsoft.netcore.app.ref\\7.0.20\\microsoft.netcore.app.ref.7.0.20.nupkg.sha512",
+    "C:\\Users\\Honzik\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\7.0.20\\microsoft.windowsdesktop.app.ref.7.0.20.nupkg.sha512",
+    "C:\\Users\\Honzik\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\7.0.20\\microsoft.aspnetcore.app.ref.7.0.20.nupkg.sha512"
+  ],
+  "logs": []
+}
