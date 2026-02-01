@@ -13,3 +13,4 @@ C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.dl
 C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\refint\Asterix.Bots.dll
 C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.pdb
 C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\ref\Asterix.Bots.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Bots\obj\Debug\net7.0\Asterix.Bots.sourcelink.json

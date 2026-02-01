@@ -14,7 +14,9 @@ namespace Asterix.Core.Models
         IReadOnlyDictionary<int, IReadOnlyList<Card>> Hands,
         IReadOnlyDictionary<int, PlayerState> Players,
         IReadOnlyList<BattlefieldInstance> Battlefields,
-        IReadOnlyList<BattlefieldCard> BattlefieldDeck
+        IReadOnlyList<BattlefieldCard> BattlefieldDeck,
+        PendingReplacementChoice PendingReplacement,
+        IReadOnlyList<Token> TokenDeck
     ) : IGameState
     {
         public string SerializeToJson()

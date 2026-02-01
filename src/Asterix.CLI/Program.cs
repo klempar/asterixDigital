@@ -83,9 +83,8 @@ namespace Asterix.CLI
                     }
                 }
 
-                int maxTurns = 50;
                 int turn = 0;
-                while (!engine.IsTerminal(gameState) && turn < maxTurns)
+                while (!engine.IsTerminal(gameState))
                 {
                     var currentPlayer = gameState.CurrentPlayerId == 0 ? 0 : 1;
                     var legal = engine.LegalMoves(gameState);

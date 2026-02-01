@@ -9,3 +9,4 @@ C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.dl
 C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\refint\Asterix.Core.dll
 C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.pdb
 C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\ref\Asterix.Core.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.Core\obj\Debug\net7.0\Asterix.Core.sourcelink.json

@@ -18,3 +18,4 @@ C:\Users\Honzik\asterixDigital\src\Asterix.CLI\obj\Debug\net7.0\refint\Asterix.C
 C:\Users\Honzik\asterixDigital\src\Asterix.CLI\obj\Debug\net7.0\Asterix.CLI.pdb
 C:\Users\Honzik\asterixDigital\src\Asterix.CLI\obj\Debug\net7.0\Asterix.CLI.genruntimeconfig.cache
 C:\Users\Honzik\asterixDigital\src\Asterix.CLI\obj\Debug\net7.0\ref\Asterix.CLI.dll
+C:\Users\Honzik\asterixDigital\src\Asterix.CLI\obj\Debug\net7.0\Asterix.CLI.sourcelink.json

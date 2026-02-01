@@ -18,6 +18,9 @@ namespace Asterix.Core.Engine
             foreach (var kv in gs.Hands) hands[kv.Key] = new List<Card>(kv.Value);
             var players = new Dictionary<int, PlayerState>(gs.Players);
             var battlefields = new List<BattlefieldInstance>(gs.Battlefields);
+            var tokenDeck = new List<Token>(gs.TokenDeck);
+            var bfDeck = new List<BattlefieldCard>(gs.BattlefieldDeck);
+            var pending = gs.PendingReplacement;
 
             int current = gs.CurrentPlayerId;
 
@@ -81,18 +84,74 @@ namespace Asterix.Core.Engine
 
             switch (action)
             {
+                case ReplacementChoiceAction rca:
+                {
+                    // handle a player's replacement choice if pending
+                    if (pending == null) break;
+                    if (current != pending.PlayerId) break;
+
+                    // validate orientation
+                    var chosenFacing = rca.FacingPlayer0;
+
+                    // insert the new battlefield at the requested index
+                    var newInstance = new BattlefieldInstance(pending.NewCard, chosenFacing, new List<Card>().AsReadOnly(), new List<Card>().AsReadOnly());
+                    if (pending.BattlefieldIndex <= battlefields.Count)
+                        battlefields.Insert(pending.BattlefieldIndex, newInstance);
+
+                    // handle token draw choice
+                    if (rca.TokenChoice.HasValue)
+                    {
+                        var desired = rca.TokenChoice.Value;
+                        // check player's current count of that token type
+                        var pstate = players[current];
+                        var currentCount = pstate.Tokens?.Count(t => t.Type == desired) ?? 0;
+                        if (currentCount < 2)
+                        {
+                            var idx = tokenDeck.FindIndex(t => t.Type == desired);
+                            if (idx >= 0)
+                            {
+                                var drawn = tokenDeck[idx];
+                                tokenDeck.RemoveAt(idx);
+                                var newTokens = new List<Token>(pstate.Tokens) { drawn };
+                                players[current] = new PlayerState(pstate.PlayerId, pstate.Score, newTokens.AsReadOnly(), pstate.WonBattlefields ?? new List<BattlefieldCard>().AsReadOnly());
+                                Console.WriteLine($"[TOKEN DRAW] Player {current} drew token {drawn.Name}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[TOKEN DRAW] Player {current} requested {desired} but none left");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[TOKEN DRAW] Player {current} cannot hold 3 of {desired}, draw denied");
+                        }
+                    }
+
+                    // clear pending
+                    pending = null;
+                    break;
+                }
                 case PlayCardAction pca:
                 {
                     var hand = hands[current];
                     if (pca.CardIndexInHand < 0 || pca.CardIndexInHand >= hand.Count) break;
                     if (pca.BattlefieldIndex < 0 || pca.BattlefieldIndex >= battlefields.Count) break;
-
                     var card = hand[pca.CardIndexInHand];
-                    hand.RemoveAt(pca.CardIndexInHand);
 
                     // determine which side this player occupies on the battlefield
                     var bf = battlefields[pca.BattlefieldIndex];
                     bool playerIsRedSide = (current == 0 && bf.FacingPlayer0 == SideColor.Red) || (current == 1 && bf.FacingPlayer0 == SideColor.Blue);
+
+                    // enforce rule: player may play a card only if its color matches the side facing them, or it's Purple
+                    var requiredColor = playerIsRedSide ? "Red" : "Blue";
+                    if (!(string.Equals(card.Color, requiredColor, System.StringComparison.OrdinalIgnoreCase) || string.Equals(card.Color, "Purple", System.StringComparison.OrdinalIgnoreCase)))
+                    {
+                        System.Console.WriteLine($"[ILLEGAL MOVE] Player {current} attempted to play {card.Color} card to {requiredColor} side -> denied");
+                        break;
+                    }
+
+                    // legal: remove from hand and add to appropriate side
+                    hand.RemoveAt(pca.CardIndexInHand);
                     List<Card> newRed = new List<Card>(bf.SideRedCards);
                     List<Card> newBlue = new List<Card>(bf.SideBlueCards);
                     if (playerIsRedSide) newRed.Add(card); else newBlue.Add(card);
@@ -110,10 +169,16 @@ namespace Asterix.Core.Engine
                     var tlist = new List<Token>(pstate.Tokens);
                     if (pta.TokenIndex < 0 || pta.TokenIndex >= tlist.Count) break;
                     var tok = tlist[pta.TokenIndex];
+                    // helmets are not playable
+                    if (tok.Type == TokenType.Helmet)
+                    {
+                        System.Console.WriteLine($"[ACTION] Player {current} attempted to play Helmet -> ignored");
+                        break;
+                    }
                     tlist.RemoveAt(pta.TokenIndex);
-                    // recompute score: sum of won battlefields + number of Helmet tokens
+                    // recompute score: sum of won battlefields + sum of helmet values
                     var wonList = pstate.WonBattlefields != null ? new List<BattlefieldCard>(pstate.WonBattlefields) : new List<BattlefieldCard>();
-                    int newScore = (wonList.Count > 0 ? wonList.Sum(b => b.Points) : 0) + tlist.Count(x => x.Type == TokenType.Helmet);
+                    int newScore = (wonList.Sum(b => b.Points)) + tlist.Where(x => x.Type == TokenType.Helmet).Sum(x => x.Value);
                     players[current] = new PlayerState(pstate.PlayerId, newScore, tlist.AsReadOnly(), wonList.AsReadOnly());
 
                     System.Console.WriteLine($"[ACTION] Player {current} played token {tok.Type}");
@@ -195,16 +260,49 @@ namespace Asterix.Core.Engine
                     var pw = players[winnerPlayerId];
                     var won = pw.WonBattlefields != null ? new List<BattlefieldCard>(pw.WonBattlefields) : new List<BattlefieldCard>();
                     won.Add(bf.Card);
-                    int updatedScore = won.Sum(b => b.Points) + (pw.Tokens?.Count(t => t.Type == TokenType.Helmet) ?? 0);
+                    int updatedScore = won.Sum(b => b.Points) + (pw.Tokens?.Where(t => t.Type == TokenType.Helmet).Sum(t => t.Value) ?? 0);
                     players[winnerPlayerId] = new PlayerState(pw.PlayerId, updatedScore, pw.Tokens ?? new List<Token>().AsReadOnly(), won.AsReadOnly());
 
+                    // move cards from both sides of the battlefield to the discard pile
+                    if (bf.SideRedCards != null && bf.SideRedCards.Count > 0)
+                    {
+                        discard.AddRange(bf.SideRedCards);
+                        Console.WriteLine($"[RESOLVE] Moved {bf.SideRedCards.Count} cards from Red side of battlefield {bi} to discard");
+                    }
+                    if (bf.SideBlueCards != null && bf.SideBlueCards.Count > 0)
+                    {
+                        discard.AddRange(bf.SideBlueCards);
+                        Console.WriteLine($"[RESOLVE] Moved {bf.SideBlueCards.Count} cards from Blue side of battlefield {bi} to discard");
+                    }
+
                     Console.WriteLine($"[RESOLVE] Battlefield {bi} ({bf.Card.Name}) won by Player {winnerPlayerId}; +{bf.Card.Points} points");
-                    // also print updated score
+                    // also print updated score for all players
                     var newPw = players[winnerPlayerId];
                     Console.WriteLine($"[SCORE] P{winnerPlayerId}={newPw.Score}");
 
                     // remove battlefield from active list
                     battlefields.RemoveAt(bi);
+
+                    // draw replacement battlefield from battlefield deck (if any) and create pending replacement choice for loser
+                    if (bfDeck.Count > 0)
+                    {
+                        var newBfCard = bfDeck[0];
+                        bfDeck.RemoveAt(0);
+                        int loser = 1 - winnerPlayerId;
+                        // compute token options: types present in tokenDeck excluding helmets and excluding types the loser already has >=2
+                        var tokenTypesAvailable = tokenDeck.Select(t => t.Type).Distinct().Where(tt => tt != TokenType.Helmet).ToList();
+                        var loserPState = players[loser];
+                        var tokenOptions = new List<TokenType>();
+                        foreach (var tt in tokenTypesAvailable)
+                        {
+                            var cnt = loserPState.Tokens?.Count(t => t.Type == tt) ?? 0;
+                            if (cnt < 2) tokenOptions.Add(tt);
+                        }
+
+                        var orientationOptions = new List<SideColor> { SideColor.Red, SideColor.Blue };
+                        pending = new PendingReplacementChoice(loser, bi, newBfCard, orientationOptions.AsReadOnly(), tokenOptions.AsReadOnly());
+                        Console.WriteLine($"[PENDING REPLACEMENT] Player {loser} must choose orientation and token options: {string.Join(",", tokenOptions)} for battlefield {newBfCard.Name}");
+                    }
                 }
             }
 
@@ -239,7 +337,9 @@ namespace Asterix.Core.Engine
             var newBattlefields = battlefields.AsReadOnly();
 
             var nextPlayer = (gs.CurrentPlayerId + 1) % gs.PlayerCount;
-            return new GameState(gs.TurnNumber + 1, nextPlayer, gs.PlayerCount, newDraw, newDiscard, gs.SupportDeck, newHands, newPlayers, newBattlefields, gs.BattlefieldDeck);
+            var newTokenDeck = tokenDeck.AsReadOnly();
+            var newBattlefieldDeck = bfDeck.AsReadOnly();
+            return new GameState(gs.TurnNumber + 1, nextPlayer, gs.PlayerCount, newDraw, newDiscard, gs.SupportDeck, newHands, newPlayers, newBattlefields, newBattlefieldDeck, pending, newTokenDeck);
         }
 
         public IReadOnlyList<IAction> LegalMoves(IGameState state)
@@ -249,6 +349,21 @@ namespace Asterix.Core.Engine
             var moves = new List<IAction>();
             var current = gs.CurrentPlayerId;
 
+            // If a pending replacement choice exists, only the designated player may make replacement actions
+            if (gs.PendingReplacement != null && gs.PendingReplacement.PlayerId == current)
+            {
+                foreach (var orient in gs.PendingReplacement.OrientationOptions)
+                {
+                    // allow choosing no token (null) as well as any provided token options
+                    moves.Add(new ReplacementChoiceAction(orient, null));
+                    foreach (var tt in gs.PendingReplacement.TokenOptions)
+                    {
+                        moves.Add(new ReplacementChoiceAction(orient, tt));
+                    }
+                }
+                return moves;
+            }
+
             // play card to any battlefield: for each card index and battlefield index
             if (gs.Hands.TryGetValue(current, out var hand))
             {
@@ -256,7 +371,15 @@ namespace Asterix.Core.Engine
                 {
                     for (int bi = 0; bi < gs.Battlefields.Count; bi++)
                     {
-                        moves.Add(new PlayCardAction(ci, bi));
+                        // determine if this play would be legal: card color must match side facing the player (or be Purple)
+                        var bf = gs.Battlefields[bi];
+                        bool playerIsRedSide = (current == 0 && bf.FacingPlayer0 == SideColor.Red) || (current == 1 && bf.FacingPlayer0 == SideColor.Blue);
+                        var requiredColor = playerIsRedSide ? "Red" : "Blue";
+                        var cardColor = hand[ci].Color ?? "";
+                        if (string.Equals(cardColor, requiredColor, System.StringComparison.OrdinalIgnoreCase) || string.Equals(cardColor, "Purple", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            moves.Add(new PlayCardAction(ci, bi));
+                        }
                     }
                 }
             }
@@ -289,12 +412,33 @@ namespace Asterix.Core.Engine
 
         public bool IsTerminal(IGameState state)
         {
+            if (state is not GameState gs) return false;
+            // Terminal when any player's score reaches or exceeds 50
+            foreach (var kv in gs.Players)
+            {
+                if (kv.Value != null && kv.Value.Score >= 50) return true;
+            }
             return false;
         }
 
         public GameOutcome Evaluate(IGameState state)
         {
-            return new GameOutcome("ongoing", null, new Dictionary<int, double>());
+            if (state is not GameState gs) return new GameOutcome("ongoing", null, new Dictionary<int, double>());
+
+            // build score dictionary
+            var scores = new Dictionary<int, double>();
+            foreach (var kv in gs.Players) scores[kv.Key] = kv.Value?.Score ?? 0;
+
+            // Check for winner (first player with score >= 50)
+            foreach (var kv in gs.Players)
+            {
+                if (kv.Value != null && kv.Value.Score >= 50)
+                {
+                    return new GameOutcome("win", kv.Key, scores);
+                }
+            }
+
+            return new GameOutcome("ongoing", null, scores);
         }
 
         // Initialize a new game: create decks, shuffle, and deal hands
@@ -304,11 +448,19 @@ namespace Asterix.Core.Engine
             var cards = new List<Card>();
             for (int i = 1; i <= 10; i++)
             {
-                cards.Add(new Card($"Red {i}", "Red", i, "Simple", "noop"));
+                cards.Add(new Card($"Red {i}", "Red", i, "Simple", "noop", CardBackColor.Red));
             }
             for (int i = 1; i <= 10; i++)
             {
-                cards.Add(new Card($"Blue {i}", "Blue", i, "Simple", "noop"));
+                cards.Add(new Card($"Blue {i}", "Blue", i, "Simple", "noop", CardBackColor.Blue));
+            }
+
+            // Add Purple cards: 10 cards, power 1..10. Purple can be played to either side facing the player.
+            for (int i = 1; i <= 10; i++)
+            {
+                // assign random back color for purple cards so some look like Red-backed and some like Blue-backed
+                var back = (rng.NextInt(2) == 0) ? CardBackColor.Red : CardBackColor.Blue;
+                cards.Add(new Card($"Purple {i}", "Purple", i, "Simple", "noop", back));
             }
 
             // Shuffle: Fisher-Yates
@@ -337,8 +489,8 @@ namespace Asterix.Core.Engine
             var discard = new List<Card>().AsReadOnly();
             var support = new List<Card>().AsReadOnly();
 
-            // Create battlefield deck (simple set of 4) and shuffle
-            var bfNames = new[] { "Hill", "River", "Forest", "Ruins" };
+            // Create battlefield deck (set of 10)
+            var bfNames = new[] { "Hill", "River", "Forest", "Ruins", "Plains", "Mountain", "Swamp", "Lake", "Valley", "Castle" };
             var bfCards = new List<BattlefieldCard>();
             foreach (var n in bfNames)
             {
@@ -367,26 +519,47 @@ namespace Asterix.Core.Engine
                 battlefields.Add(new BattlefieldInstance(b1, SideColor.Blue, new List<Card>().AsReadOnly(), new List<Card>().AsReadOnly()));  // facing player0 = Blue
             }
 
-            // Create tokens for each player: one of each type
+            // Build shared token deck: 10 copies of Boar, Fish, Potion; 10 normal Helmets (value 1) and 10 Centurion Helmets (value 3)
+            var tokenDeck = new List<Token>();
+            for (int i = 0; i < 10; i++) tokenDeck.Add(new Token(TokenType.Boar, "Boar", 0));
+            for (int i = 0; i < 10; i++) tokenDeck.Add(new Token(TokenType.Fish, "Fish", 0));
+            for (int i = 0; i < 10; i++) tokenDeck.Add(new Token(TokenType.Potion, "Potion", 0));
+            for (int i = 0; i < 10; i++) tokenDeck.Add(new Token(TokenType.Helmet, "Helmet", 1));
+            for (int i = 0; i < 10; i++) tokenDeck.Add(new Token(TokenType.Helmet, "Centurion Helmet", 3));
+
+            // token deck left in deterministic order (no shuffle). Players will draw specific token types.
+
+            // Create tokens for each player: give each player one Boar, one Fish, one Potion and one NORMAL Helmet (value 1)
             var players = new Dictionary<int, PlayerState>();
             for (int p = 0; p < playerCount; p++)
             {
-                var tokens = new List<Token>
-                {
-                    new Token(TokenType.Helmet, "noop"),
-                    new Token(TokenType.Boar, "noop"),
-                    new Token(TokenType.Fish, "noop"),
-                    new Token(TokenType.Potion, "noop")
-                };
-                // initial score = number of helmet tokens (each helmet worth 1 point)
-                int initialScore = tokens.Count(t => t.Type == TokenType.Helmet);
+                var tokens = new List<Token>();
+                // take one normal helmet if available, otherwise any helmet
+                var idxHelmet = tokenDeck.FindIndex(t => t.Type == TokenType.Helmet && t.Value == 1);
+                if (idxHelmet < 0) idxHelmet = tokenDeck.FindIndex(t => t.Type == TokenType.Helmet);
+                if (idxHelmet >= 0) { tokens.Add(tokenDeck[idxHelmet]); tokenDeck.RemoveAt(idxHelmet); }
+
+                // take one Boar
+                var idxBoar = tokenDeck.FindIndex(t => t.Type == TokenType.Boar);
+                if (idxBoar >= 0) { tokens.Add(tokenDeck[idxBoar]); tokenDeck.RemoveAt(idxBoar); }
+
+                // take one Fish
+                var idxFish = tokenDeck.FindIndex(t => t.Type == TokenType.Fish);
+                if (idxFish >= 0) { tokens.Add(tokenDeck[idxFish]); tokenDeck.RemoveAt(idxFish); }
+
+                // take one Potion
+                var idxPotion = tokenDeck.FindIndex(t => t.Type == TokenType.Potion);
+                if (idxPotion >= 0) { tokens.Add(tokenDeck[idxPotion]); tokenDeck.RemoveAt(idxPotion); }
+
+                int initialScore = tokens.Where(t => t.Type == TokenType.Helmet).Sum(t => t.Value);
                 players[p] = new PlayerState(p, initialScore, tokens.AsReadOnly(), new List<BattlefieldCard>().AsReadOnly());
             }
 
             // Expose full battlefield deck (before drawing) in game state
             var battlefieldDeck = bfDeck.AsReadOnly();
+            var tokenDeckRead = tokenDeck.AsReadOnly();
 
-            return new GameState(0, 0, playerCount, draw, discard, support, hands, players, battlefields, battlefieldDeck);
+            return new GameState(0, 0, playerCount, draw, discard, support, hands, players, battlefields, battlefieldDeck, null, tokenDeckRead);
         }
     }
 }
